@@ -1,5 +1,30 @@
 package logica;
 
-public class ProductoVenta {
+import java.io.Serializable;
 
+public abstract class ProductoVenta implements Serializable {
+	private String nombre;
+	private double precio;
+
+	public ProductoVenta(String nombre, double precio) {
+		this.nombre = nombre;
+		this.precio = precio;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public double getPrecio() {
+		return precio;
+	}
+
+	public void setPrecio(double precio) {
+		this.precio = precio;
+	}
+
+	@Override
+	public String toString() {
+		return this.nombre+"\t"+this.precio;
+	}
 }

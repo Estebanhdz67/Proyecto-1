@@ -1,5 +1,5 @@
 package logica;
 
-public class Comprador {
-
+public interface Comprador {
+	public String getNombre();
 }

@@ -1,38 +1,41 @@
 package logica;
 
-public class InscripcionEquipo {
+import java.io.Serializable;
 
-	private int id;
+import java.sql.Date;
+
+public class InscripcionEquipo extends Inscripcion implements Serializable {
 	private Socio socio;
-	private int numeroCamiseta;
+	private Equipo equipo;
 	private String posicion;
-	
-	public InscripcionEquipo(int id, Socio socio, int numeroCamiseta, String posicion) {
-		this.id = id;
-		this.socio = socio;
-		this.numeroCamiseta = numeroCamiseta;
-		this.posicion = posicion;
-	}
+	private int numeroCamiseta;
 
-	public int getId() {
-		return id;
+	public InscripcionEquipo(Date fecha, String estado, Socio socio, Equipo equipo, String posicion, int numeroCamiseta) {
+		super(fecha, estado);
+		this.socio = socio;
+		this.equipo = equipo;
+		this.posicion = posicion;
+		this.numeroCamiseta = numeroCamiseta;
 	}
 
 	public Socio getSocio() {
 		return socio;
 	}
 
-	public int getNumeroCamiseta() {
-		return numeroCamiseta;
+	public Equipo getEquipo() {
+		return equipo;
 	}
 
 	public String getPosicion() {
 		return posicion;
 	}
-	
+
+	public int getNumeroCamiseta() {
+		return numeroCamiseta;
+	}
+
 	@Override
 	public String toString() {
-		return "\t" + this.id + "\t" + this.socio.getNombre() + "\t" +
-				this.numeroCamiseta + "\t" + this.posicion;
+		return this.socio.getNombre()+"\t"+this.posicion+"\t"+this.numeroCamiseta+"\t"+getEstado();
 	}
 }

@@ -1,23 +1,32 @@
 package logica;
 
-public abstract class Usuario {
+import java.io.Serializable;
 
-	private int id;
+public abstract class Usuario implements Serializable {
+	private String login;
+	private String password;
 	private String nombre;
-	private String apellido;
-	
-	public Usuario(int id, String nombre, String apellido) {
-		this.id = id;
+
+	public Usuario(String login, String password, String nombre) {
+		this.login = login;
+		this.password = password;
 		this.nombre = nombre;
-		this.apellido = apellido;
 	}
 
-	public int getId() {
-		return id;
+	public String getLogin() {
+		return login;
 	}
 
-	public void setId(int id) {
-		this.id = id;
+	public void setLogin(String login) {
+		this.login = login;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	public String getNombre() {
@@ -28,16 +37,12 @@ public abstract class Usuario {
 		this.nombre = nombre;
 	}
 
-	public String getApellido() {
-		return apellido;
+	public boolean validarCredenciales(String login, String password) {
+		return this.login.equals(login) && this.password.equals(password);
 	}
 
-	public void setApellido(String apellido) {
-		this.apellido = apellido;
-	}
-	
 	@Override
 	public String toString() {
-		return this.id + "\t" + this.nombre + "\t" + this.apellido;
+		return this.login + "\t" + this.nombre;
 	}
 }

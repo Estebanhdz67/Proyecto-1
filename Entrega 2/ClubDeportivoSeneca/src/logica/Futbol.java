@@ -1,5 +1,9 @@
 package logica;
 
-public class Futbol {
+import java.io.Serializable;
 
+public class Futbol extends DeporteConjunto implements Serializable {
+	public Futbol() {
+		super("Futbol", 7);
+	}
 }
