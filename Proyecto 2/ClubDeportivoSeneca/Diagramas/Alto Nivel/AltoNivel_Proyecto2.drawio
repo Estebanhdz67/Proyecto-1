@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" pages="9">
   <diagram id="seneca-only" name="00 ClubDeportivoSeneca">
-    <mxGraphModel dx="2929" dy="1611" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1700" math="0" shadow="0">
+    <mxGraphModel dx="2828" dy="1555" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1700" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -14,7 +14,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="CM_N7VtcrykKex03PRTJ" name="01 Usuarios y roles – Alto nivel">
-    <mxGraphModel dx="980" dy="571" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1038" dy="571" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -75,7 +75,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="Us7DQc_TTROw4RUK8YTs" name="02 Deportes, partidos y competencias – Alto nivel">
-    <mxGraphModel dx="5160" dy="3007" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="6800" pageHeight="2100" math="0" shadow="0">
+    <mxGraphModel dx="2216" dy="1219" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="6800" pageHeight="2100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -343,14 +343,20 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="EnYQ-A31Lv3_FSXfFsJG-56" edge="1" parent="1" source="EnYQ-A31Lv3_FSXfFsJG-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;" target="EnYQ-A31Lv3_FSXfFsJG-22" value="Partido 1 ── 0..* EstadisticaConjunto">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="EnYQ-A31Lv3_FSXfFsJG-56" edge="1" parent="1" source="EnYQ-A31Lv3_FSXfFsJG-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;" target="EnYQ-A31Lv3_FSXfFsJG-22" value="">
+          <mxGeometry relative="1" x="0.1579" as="geometry">
             <Array as="points">
-              <mxPoint x="5950" y="467" />
-              <mxPoint x="6010" y="467" />
-              <mxPoint x="6010" y="1565" />
-              <mxPoint x="5920" y="1565" />
+              <mxPoint x="5990" y="470" />
+              <mxPoint x="5990" y="690" />
+              <mxPoint x="5820" y="690" />
+              <mxPoint x="5820" y="1340" />
+              <mxPoint x="5725" y="1340" />
             </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9NICWOJtF1bPvdaNypco-1" connectable="0" parent="EnYQ-A31Lv3_FSXfFsJG-56" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];inheritText=1;" value="Partido 1 ── 0..* EstadisticaConjunto" vertex="1">
+          <mxGeometry relative="1" x="0.7239" as="geometry">
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="EnYQ-A31Lv3_FSXfFsJG-57" edge="1" parent="1" source="EnYQ-A31Lv3_FSXfFsJG-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#CC0000;" target="EnYQ-A31Lv3_FSXfFsJG-22" value="Socio 1 ── 0..* EstadisticaConjunto">
