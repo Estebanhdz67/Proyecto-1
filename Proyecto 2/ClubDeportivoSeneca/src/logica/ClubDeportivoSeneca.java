@@ -16,6 +16,8 @@ public class ClubDeportivoSeneca {
 	private HashMap<String, Equipo> equipos;
 	private HashMap<String, Competencia> competencias;
 	private HashMap<String, Torneo> torneos;
+	private HashMap<String, EstudianteUniversidad> estudiantes;
+	private HashMap<String, ParticipanteExterno> externos;
 	private HashMap<String, DisciplinaIndividual> disciplinas;
 	private HashMap<String, Instalacion> instalaciones;
 	private HashMap<String, ProductoVenta> productos;
@@ -43,6 +45,8 @@ public class ClubDeportivoSeneca {
 		this.equipos = new HashMap<String, Equipo>();
 		this.competencias = new HashMap<String, Competencia>();
 		this.torneos = new HashMap<String, Torneo>();
+		this.estudiantes = new HashMap<String, EstudianteUniversidad>();
+		this.externos = new HashMap<String, ParticipanteExterno>();
 		this.disciplinas = new HashMap<String, DisciplinaIndividual>();
 		this.instalaciones = new HashMap<String, Instalacion>();
 		this.productos = new HashMap<String, ProductoVenta>();
@@ -423,9 +427,30 @@ public class ClubDeportivoSeneca {
 
 	public EncuentroTorneo crearEncuentroTorneo(String idTorneo, Date fecha, ParticipanteTorneo participante1, ParticipanteTorneo participante2) throws Exception {
 		Torneo torneo = getTorneo(idTorneo);
+
+		if(!torneo.getEstado().equals("En curso")) {
+			throw new Exception("El torneo no esta en curso");
+		}
+
+		if(!this.estaInscritoTorneo(idTorneo, participante1) || !this.estaInscritoTorneo(idTorneo, participante2)) {
+			throw new Exception("Los participantes deben estar inscritos en el torneo");
+		}
+
 		EncuentroTorneo encuentroTorneo = new EncuentroTorneo(fecha, participante1, participante2);
 		torneo.agregarEncuentro(encuentroTorneo);
 		return encuentroTorneo;
+	}
+
+	public boolean estaInscritoTorneo(String idTorneo, ParticipanteTorneo participante) throws Exception {
+		Torneo torneo = getTorneo(idTorneo);
+
+		for(InscripcionTorneo inscripcionTorneo : torneo.getInscripciones()) {
+			if(inscripcionTorneo.getParticipante() == participante) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public void registrarResultadoTorneo(EncuentroTorneo encuentroTorneo, String resultado) throws Exception {
@@ -471,6 +496,148 @@ public class ClubDeportivoSeneca {
 
 		TorneoRecreativo torneoRecreativo = (TorneoRecreativo) torneo;
 		return torneoRecreativo.generarBono(ganador);
+	}
+
+	public BonoDescuento getBono(String codigo) throws Exception {
+		for(Torneo torneo : this.torneos.values()) {
+			if(torneo instanceof TorneoRecreativo) {
+				for(BonoDescuento bonoDescuento : ((TorneoRecreativo) torneo).getBonos()) {
+					if(bonoDescuento.getCodigo().equals(codigo)) {
+						return bonoDescuento;
+					}
+				}
+			}
+		}
+
+		throw new Exception("Bono no existe");
+	}
+
+	public ArrayList<BonoDescuento> getBonos(ParticipanteTorneo participante) {
+		ArrayList<BonoDescuento> bonosParticipante = new ArrayList<BonoDescuento>();
+
+		for(Torneo torneo : this.torneos.values()) {
+			if(torneo instanceof TorneoRecreativo) {
+				for(BonoDescuento bonoDescuento : ((TorneoRecreativo) torneo).getBonos()) {
+					if(bonoDescuento.getBeneficiario() == participante) {
+						bonosParticipante.add(bonoDescuento);
+					}
+				}
+			}
+		}
+
+		return bonosParticipante;
+	}
+
+	public String consultarBonos(ParticipanteTorneo participante) {
+		String texto = "Codigo\tPorcentaje\tEstado\n";
+
+		for(BonoDescuento bonoDescuento : this.getBonos(participante)) {
+			texto += bonoDescuento.getCodigo() + "\t";
+			texto += bonoDescuento.getPorcentaje() + "\t";
+
+			if(bonoDescuento.estaUsado()) {
+				texto += "Usado\n";
+			}else {
+				texto += "Disponible\n";
+			}
+		}
+
+		return texto;
+	}
+
+	private double aplicarBono(String codigoBono, Comprador comprador, boolean otraPromocion, double subtotal) throws Exception {
+		BonoDescuento bonoDescuento = this.getBono(codigoBono);
+
+		bonoDescuento.usarBono((ParticipanteTorneo) comprador, otraPromocion);
+		return subtotal * bonoDescuento.getPorcentaje();
+	}
+
+	public EstudianteUniversidad registrarEstudiante(String idEstudiante, String nombre, double rankingTorneo) throws Exception {
+		if(idEstudiante == null || idEstudiante.equals("") || nombre == null || nombre.equals("")) {
+			throw new Exception("Datos del estudiante incompletos");
+		}
+
+		if(rankingTorneo < 0) {
+			throw new Exception("Ranking invalido");
+		}
+
+		if(this.estudiantes.containsKey(idEstudiante)) {
+			throw new Exception("El estudiante ya existe");
+		}
+
+		EstudianteUniversidad estudianteUniversidad = new EstudianteUniversidad(idEstudiante, nombre, rankingTorneo);
+		this.estudiantes.put(idEstudiante, estudianteUniversidad);
+		return estudianteUniversidad;
+	}
+
+	public ParticipanteExterno registrarExterno(String identificacion, String nombre, double rankingTorneo) throws Exception {
+		if(identificacion == null || identificacion.equals("") || nombre == null || nombre.equals("")) {
+			throw new Exception("Datos del participante externo incompletos");
+		}
+
+		if(rankingTorneo < 0) {
+			throw new Exception("Ranking invalido");
+		}
+
+		if(this.externos.containsKey(identificacion)) {
+			throw new Exception("El participante externo ya existe");
+		}
+
+		ParticipanteExterno participanteExterno = new ParticipanteExterno(identificacion, nombre, rankingTorneo);
+		this.externos.put(identificacion, participanteExterno);
+		return participanteExterno;
+	}
+
+	public EstudianteUniversidad getEstudiante(String idEstudiante) throws Exception {
+		EstudianteUniversidad estudianteEncontrado = this.estudiantes.get(idEstudiante);
+
+		if(estudianteEncontrado == null) {
+			throw new Exception("Estudiante no existe");
+		}
+
+		return estudianteEncontrado;
+	}
+
+	public ParticipanteExterno getExterno(String identificacion) throws Exception {
+		ParticipanteExterno externoEncontrado = this.externos.get(identificacion);
+
+		if(externoEncontrado == null) {
+			throw new Exception("Participante externo no existe");
+		}
+
+		return externoEncontrado;
+	}
+
+	public HashMap<String, EstudianteUniversidad> getEstudiantes() {
+		return estudiantes;
+	}
+
+	public HashMap<String, ParticipanteExterno> getExternos() {
+		return externos;
+	}
+
+	public String consultarEstudiantes() {
+		String texto = "Id\tNombre\tRanking\n";
+
+		for(EstudianteUniversidad estudianteUniversidad : this.estudiantes.values()) {
+			texto += estudianteUniversidad.getIdEstudiante() + "\t";
+			texto += estudianteUniversidad.getNombre() + "\t";
+			texto += estudianteUniversidad.getRankingTorneo() + "\n";
+		}
+
+		return texto;
+	}
+
+	public String consultarExternos() {
+		String texto = "Identificacion\tNombre\tRanking\n";
+
+		for(ParticipanteExterno participanteExterno : this.externos.values()) {
+			texto += participanteExterno.getIdentificacion() + "\t";
+			texto += participanteExterno.getNombre() + "\t";
+			texto += participanteExterno.getRankingTorneo() + "\n";
+		}
+
+		return texto;
 	}
 
 	public String consultarTorneos() {
@@ -552,6 +719,10 @@ public class ClubDeportivoSeneca {
 	}
 
 	public VentaTienda registrarVentaTienda(String comprador, String ubicacion, HashMap<String, Integer> cantidades, String codigo, int puntos) throws Exception {
+		return this.registrarVentaTienda(comprador, ubicacion, cantidades, codigo, puntos, null);
+	}
+
+	public VentaTienda registrarVentaTienda(String comprador, String ubicacion, HashMap<String, Integer> cantidades, String codigo, int puntos, String codigoBono) throws Exception {
 		Comprador compradorVenta = buscarComprador(comprador);
 		VentaTienda ventaTienda = new VentaTienda(new Date(System.currentTimeMillis()), compradorVenta);
 		double descuento = 0;
@@ -573,16 +744,26 @@ public class ClubDeportivoSeneca {
 		}
 
 		double subtotal = ventaTienda.calcularSubtotal();
-		if(compradorVenta instanceof Empleado && ((Empleado) compradorVenta).getCodigoDescuento().equals(codigo)) {
-			descuento = subtotal*0.15;
+		if(codigoBono != null && !codigoBono.equals("")) {
+			boolean otraPromocion = (codigo != null && !codigo.equals("")) || puntos > 0;
+			descuento = this.aplicarBono(codigoBono, compradorVenta, otraPromocion, subtotal);
+			ventaTienda.setCodigoDescuentoUsado(codigoBono);
 		}
-		else if(compradorVenta instanceof Socio && codigoValidoEmpleado(codigo)) {
-			descuento = subtotal * 0.08;
+		else {
+			if(compradorVenta instanceof Empleado && ((Empleado) compradorVenta).getCodigoDescuento().equals(codigo)) {
+				descuento = subtotal*0.15;
+			}
+			else if(compradorVenta instanceof Socio && codigoValidoEmpleado(codigo)) {
+				descuento = subtotal * 0.08;
+			}
+			ventaTienda.setCodigoDescuentoUsado(codigo);
 		}
 
 		ventaTienda.setDescuento(descuento);
-		ventaTienda.setCodigoDescuentoUsado(codigo);
 		double base = subtotal-descuento;
+		if(base < 0) {
+			base = 0;
+		}
 
 		if(compradorVenta instanceof Socio && puntos > 0) {
 			((Socio) compradorVenta).getCuentaFidelidad().redimirPuntos(puntos);
@@ -607,6 +788,10 @@ public class ClubDeportivoSeneca {
 	}
 
 	public VentaCafeteria registrarVentaCafeteria(String comprador, HashMap<String, Integer> cantidades, double porcentajePropina, int puntos) throws Exception {
+		return this.registrarVentaCafeteria(comprador, cantidades, porcentajePropina, puntos, null);
+	}
+
+	public VentaCafeteria registrarVentaCafeteria(String comprador, HashMap<String, Integer> cantidades, double porcentajePropina, int puntos, String codigoBono) throws Exception {
 		Comprador compradorVenta = buscarComprador(comprador);
 		VentaCafeteria ventaCafeteria = new VentaCafeteria(new Date(System.currentTimeMillis()), compradorVenta, porcentajePropina);
 		for(String nombreProducto : cantidades.keySet()) {
@@ -617,7 +802,16 @@ public class ClubDeportivoSeneca {
 			ventaCafeteria.agregarDetalle(new DetalleVenta(productoVenta, cantidades.get(nombreProducto), productoVenta.getPrecio()));
 		}
 		double subtotal = ventaCafeteria.calcularSubtotal();
-		double base = subtotal;
+		double descuento = 0;
+		if(codigoBono != null && !codigoBono.equals("")) {
+			descuento = this.aplicarBono(codigoBono, compradorVenta, puntos > 0, subtotal);
+			ventaCafeteria.setDescuento(descuento);
+			ventaCafeteria.setCodigoDescuentoUsado(codigoBono);
+		}
+		double base = subtotal-descuento;
+		if(base < 0) {
+			base = 0;
+		}
 		if(compradorVenta instanceof Socio && puntos > 0) {
 			((Socio) compradorVenta).getCuentaFidelidad().redimirPuntos(puntos);
 			ventaCafeteria.setPuntosRedimidos(puntos);
@@ -1160,6 +1354,8 @@ public class ClubDeportivoSeneca {
 		datos.add(this.solicitudes);
 		datos.add(this.sugerencias);
 		datos.add(this.torneos);
+		datos.add(this.estudiantes);
+		datos.add(this.externos);
 
 		this.archivoSerializable.escribir(datos, "clubDeportivoSeneca.bin");
 	}
@@ -1192,6 +1388,11 @@ public class ClubDeportivoSeneca {
 
 			if(datos.size() > 21) {
 				this.torneos = (HashMap<String, Torneo>) datos.get(21);
+			}
+
+			if(datos.size() > 23) {
+				this.estudiantes = (HashMap<String, EstudianteUniversidad>) datos.get(22);
+				this.externos = (HashMap<String, ParticipanteExterno>) datos.get(23);
 			}
 		}
 	}

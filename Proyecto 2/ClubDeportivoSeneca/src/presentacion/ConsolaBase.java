@@ -1,7 +1,9 @@
 package presentacion;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import logica.BonoDescuento;
 import logica.ClubDeportivoSeneca;
 import logica.ParticipanteTorneo;
 import logica.ProductoCafeteria;
@@ -235,6 +237,47 @@ public abstract class ConsolaBase {
 		}
 
 		return carrito;
+	}
+
+	// ------------------------------------------------------------------
+	// Bonos de torneos recreativos: los usan socios y empleados
+	// ------------------------------------------------------------------
+
+	protected void consultarBonos(ParticipanteTorneo participante) {
+		if(this.club.getBonos(participante).isEmpty()) {
+			System.out.println("No tiene bonos. Los bonos se ganan al quedar primero en un torneo recreativo.");
+			return;
+		}
+
+		System.out.println("Codigo\tDescuento\tEstado");
+		for(BonoDescuento bono : this.club.getBonos(participante)) {
+			System.out.println(bono.getCodigo() + "\t" + Math.round(bono.getPorcentaje() * 100) + "%\t"
+					+ (bono.estaUsado() ? "Usado" : "Disponible"));
+		}
+	}
+
+	/**
+	 * Si el participante tiene bonos sin usar, le pregunta si quiere usar uno.
+	 * Retorna el codigo del bono elegido o null si no usa ninguno.
+	 */
+	protected String leerBono(ParticipanteTorneo participante) {
+		ArrayList<BonoDescuento> disponibles = new ArrayList<BonoDescuento>();
+		ArrayList<String> descripciones = new ArrayList<String>();
+
+		for(BonoDescuento bono : this.club.getBonos(participante)) {
+			if(!bono.estaUsado()) {
+				disponibles.add(bono);
+				descripciones.add(bono.getCodigo() + " (" + Math.round(bono.getPorcentaje() * 100) + "% de descuento)");
+			}
+		}
+
+		if(disponibles.isEmpty() || !this.lector.leerSiNo("Tiene bonos de torneo disponibles. Desea usar uno?")) {
+			return null;
+		}
+
+		String codigo = disponibles.get(this.lector.leerPosicion("Bono", descripciones)).getCodigo();
+		System.out.println("El bono no se acumula con otros descuentos: no se usara codigo de empleado ni puntos.");
+		return codigo;
 	}
 
 	protected void mostrarVenta(Venta venta) {

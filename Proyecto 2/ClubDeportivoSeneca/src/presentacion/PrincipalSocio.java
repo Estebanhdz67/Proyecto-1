@@ -35,6 +35,7 @@ public class PrincipalSocio extends ConsolaBase {
 	private static final String COMPRAR_TIENDA = "Comprar en la tienda";
 	private static final String COMPRAR_CAFETERIA = "Comprar en la cafeteria";
 	private static final String MIS_PUNTOS = "Consultar mis puntos de fidelidad";
+	private static final String MIS_BONOS = "Consultar mis bonos de torneos";
 
 	// Torneos
 	private static final String VER_TORNEOS = "Consultar torneos y su estado";
@@ -77,7 +78,7 @@ public class PrincipalSocio extends ConsolaBase {
 					PROGRAMAR_PARTIDO, RESULTADO_PARTIDO}, "Volver");
 			break;
 		case COMPRAS:
-			this.mostrarMenu("COMPRAS", new String[] {COMPRAR_TIENDA, COMPRAR_CAFETERIA, MIS_PUNTOS}, "Volver");
+			this.mostrarMenu("COMPRAS", new String[] {COMPRAR_TIENDA, COMPRAR_CAFETERIA, MIS_PUNTOS, MIS_BONOS}, "Volver");
 			break;
 		case TORNEOS:
 			this.mostrarMenu("TORNEOS", new String[] {VER_TORNEOS, INSCRIBIRSE_TORNEO, RETIRARSE_TORNEO, HISTORIAL_TORNEO}, "Volver");
@@ -120,6 +121,10 @@ public class PrincipalSocio extends ConsolaBase {
 			break;
 		case MIS_PUNTOS:
 			System.out.println("Puntos disponibles: " + this.socio.getCuentaFidelidad().getPuntos() + " (1 punto = $1)");
+			break;
+
+		case MIS_BONOS:
+			this.consultarBonos(this.socio);
 			break;
 
 		// ---------- Torneos ----------
@@ -313,10 +318,16 @@ public class PrincipalSocio extends ConsolaBase {
 		this.club.getUbicacion(ubicacion);
 
 		HashMap<String, Integer> carrito = this.leerCarrito(false);
-		String codigo = this.lector.leerTextoOpcional("Codigo de descuento de un empleado");
-		int puntos = this.leerPuntosARedimir();
+		String bono = this.leerBono(this.socio);
+		String codigo = null;
+		int puntos = 0;
 
-		VentaTienda venta = this.club.registrarVentaTienda(this.socio.getIdSocio(), ubicacion, carrito, codigo, puntos);
+		if(bono == null) {
+			codigo = this.lector.leerTextoOpcional("Codigo de descuento de un empleado");
+			puntos = this.leerPuntosARedimir();
+		}
+
+		VentaTienda venta = this.club.registrarVentaTienda(this.socio.getIdSocio(), ubicacion, carrito, codigo, puntos, bono);
 		this.mostrarExito("Compra registrada.");
 		this.mostrarVenta(venta);
 		System.out.println("Puntos actuales: " + this.socio.getCuentaFidelidad().getPuntos());
@@ -325,9 +336,14 @@ public class PrincipalSocio extends ConsolaBase {
 	private void comprarCafeteria() throws Exception {
 		HashMap<String, Integer> carrito = this.leerCarrito(true);
 		double propina = this.lector.leerDecimal("Porcentaje de propina (0 a 20)", 0, 20) / 100;
-		int puntos = this.leerPuntosARedimir();
+		String bono = this.leerBono(this.socio);
+		int puntos = 0;
 
-		VentaCafeteria venta = this.club.registrarVentaCafeteria(this.socio.getIdSocio(), carrito, propina, puntos);
+		if(bono == null) {
+			puntos = this.leerPuntosARedimir();
+		}
+
+		VentaCafeteria venta = this.club.registrarVentaCafeteria(this.socio.getIdSocio(), carrito, propina, puntos, bono);
 		this.mostrarExito("Compra registrada.");
 		this.mostrarVenta(venta);
 		System.out.println("Puntos actuales: " + this.socio.getCuentaFidelidad().getPuntos());

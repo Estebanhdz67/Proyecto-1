@@ -144,6 +144,92 @@ public class TorneoTest {
 	}
 
 	@Test
+	public void liberarCuposTest1() throws Exception {
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		for(int i = 1; i <= 4; i++) {
+			this.club.inscribirParticipanteTorneo("T1", new ParticipanteExterno("E" + i, "Externo " + i, 0), false);
+		}
+
+		Exception excepcion = assertThrows(
+				Exception.class,
+				() -> this.club.inscribirParticipanteTorneo("T1", new ParticipanteExterno("E5", "Externo 5", 0), false)
+				);
+
+		assertEquals("Los cupos disponibles son preferenciales", excepcion.getMessage());
+		assertEquals(4, this.club.getTorneo("T1").getInscripciones().size());
+	}
+
+	@Test
+	public void liberarCuposTest2() throws Exception {
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		for(int i = 1; i <= 4; i++) {
+			this.club.inscribirParticipanteTorneo("T1", new ParticipanteExterno("E" + i, "Externo " + i, 0), false);
+		}
+
+		this.club.liberarCuposPreferencialesTorneo("T1");
+		this.club.inscribirParticipanteTorneo("T1", new ParticipanteExterno("E5", "Externo 5", 0), false);
+
+		assertEquals(0, this.club.getTorneo("T1").getCuposPreferenciales());
+		assertEquals(5, this.club.getTorneo("T1").getInscripciones().size());
+		assertEquals(0, this.club.getTorneo("T1").cuposDisponibles());
+	}
+
+	@Test
+	public void liberarCuposTest3() throws Exception {
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		this.club.inscribirParticipanteTorneo("T1", this.participante, true);
+
+		assertEquals(0, this.club.getTorneo("T1").getCuposPreferenciales());
+		assertEquals(4, this.club.getTorneo("T1").cuposDisponibles());
+	}
+
+	@Test
+	public void liberarCuposTest4() {
+		Exception excepcion = assertThrows(
+				Exception.class,
+				() -> this.club.liberarCuposPreferencialesTorneo("T99")
+				);
+
+		assertEquals("Torneo no existe", excepcion.getMessage());
+	}
+
+	@Test
 	public void retirarParticipanteTest1() throws Exception {
 		this.club.crearTorneo(
 				"T1",
@@ -329,6 +415,10 @@ public class TorneoTest {
 				0.10
 				);
 
+		this.club.inscribirParticipanteTorneo("T1", this.participante, false);
+		this.club.inscribirParticipanteTorneo("T1", participante2, false);
+		this.club.iniciarTorneo("T1");
+
 		EncuentroTorneo encuentro = this.club.crearEncuentroTorneo(
 				"T1",
 				Date.valueOf("2026-11-09"),
@@ -340,6 +430,95 @@ public class TorneoTest {
 
 		assertEquals("6-4", encuentro.getResultado());
 		assertTrue(encuentro.tieneResultado());
+		assertEquals(1, this.club.getTorneo("T1").getEncuentros().size());
+	}
+
+	@Test
+	public void encuentroTorneoTest2() throws Exception {
+		ParticipanteExterno participante2 = new ParticipanteExterno("200", "Juan", 1000);
+
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		this.club.inscribirParticipanteTorneo("T1", this.participante, false);
+		this.club.inscribirParticipanteTorneo("T1", participante2, false);
+
+		Exception excepcion = assertThrows(
+				Exception.class,
+				() -> this.club.crearEncuentroTorneo("T1", Date.valueOf("2026-11-09"), this.participante, participante2)
+				);
+
+		assertEquals("El torneo no esta en curso", excepcion.getMessage());
+		assertEquals(0, this.club.getTorneo("T1").getEncuentros().size());
+	}
+
+	@Test
+	public void encuentroTorneoTest3() throws Exception {
+		ParticipanteExterno participante2 = new ParticipanteExterno("200", "Juan", 1000);
+
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		this.club.inscribirParticipanteTorneo("T1", this.participante, false);
+		this.club.iniciarTorneo("T1");
+
+		Exception excepcion = assertThrows(
+				Exception.class,
+				() -> this.club.crearEncuentroTorneo("T1", Date.valueOf("2026-11-09"), this.participante, participante2)
+				);
+
+		assertEquals("Los participantes deben estar inscritos en el torneo", excepcion.getMessage());
+		assertEquals(0, this.club.getTorneo("T1").getEncuentros().size());
+	}
+
+	@Test
+	public void encuentroTorneoTest4() throws Exception {
+		ParticipanteExterno participante2 = new ParticipanteExterno("200", "Juan", 1000);
+
+		this.club.crearTorneo(
+				"T1",
+				"Torneo Padel",
+				"Intermedio",
+				5,
+				Date.valueOf("2026-11-09"),
+				"Recreativo",
+				"Liga",
+				null,
+				this.padel,
+				0.10
+				);
+
+		this.club.inscribirParticipanteTorneo("T1", this.participante, false);
+		this.club.inscribirParticipanteTorneo("T1", participante2, false);
+		this.club.iniciarTorneo("T1");
+		this.club.finalizarTorneo("T1");
+
+		Exception excepcion = assertThrows(
+				Exception.class,
+				() -> this.club.crearEncuentroTorneo("T1", Date.valueOf("2026-11-09"), this.participante, participante2)
+				);
+
+		assertEquals("El torneo no esta en curso", excepcion.getMessage());
 	}
 
 	@Test

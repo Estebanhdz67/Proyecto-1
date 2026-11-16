@@ -26,6 +26,7 @@ public class PrincipalEmpleado extends ConsolaBase {
 	private static final String COMPRAR_TIENDA = "Comprar en la tienda";
 	private static final String COMPRAR_CAFETERIA = "Comprar en la cafeteria";
 	private static final String SUGERIR = "Sugerir un producto";
+	private static final String MIS_BONOS = "Consultar mis bonos de torneos";
 	private static final String ENTRENAMIENTOS = "Entrenamientos";
 	private static final String TORNEOS = "Torneos";
 
@@ -62,9 +63,9 @@ public class PrincipalEmpleado extends ConsolaBase {
 	@Override
 	protected String[] getOpcionesMenu() {
 		if(this.empleado instanceof Entrenador) {
-			return new String[] {MIS_TURNOS, CAMBIO_TURNO, COMPRAR_TIENDA, COMPRAR_CAFETERIA, SUGERIR, ENTRENAMIENTOS, TORNEOS};
+			return new String[] {MIS_TURNOS, CAMBIO_TURNO, COMPRAR_TIENDA, COMPRAR_CAFETERIA, MIS_BONOS, SUGERIR, ENTRENAMIENTOS, TORNEOS};
 		}
-		return new String[] {MIS_TURNOS, CAMBIO_TURNO, COMPRAR_TIENDA, COMPRAR_CAFETERIA, SUGERIR, TORNEOS};
+		return new String[] {MIS_TURNOS, CAMBIO_TURNO, COMPRAR_TIENDA, COMPRAR_CAFETERIA, MIS_BONOS, SUGERIR, TORNEOS};
 	}
 
 	@Override
@@ -81,6 +82,9 @@ public class PrincipalEmpleado extends ConsolaBase {
 			break;
 		case COMPRAR_CAFETERIA:
 			this.comprarCafeteria();
+			break;
+		case MIS_BONOS:
+			this.consultarBonos(this.empleado);
 			break;
 		case SUGERIR:
 			this.sugerirProducto();
@@ -155,13 +159,14 @@ public class PrincipalEmpleado extends ConsolaBase {
 		this.club.getUbicacion(ubicacion);
 
 		HashMap<String, Integer> carrito = this.leerCarrito(false);
+		String bono = this.leerBono(this.empleado);
 		String codigo = null;
 
-		if(this.lector.leerSiNo("Desea usar su codigo de descuento de empleado (15%)?")) {
+		if(bono == null && this.lector.leerSiNo("Desea usar su codigo de descuento de empleado (15%)?")) {
 			codigo = this.empleado.getCodigoDescuento();
 		}
 
-		VentaTienda venta = this.club.registrarVentaTienda(this.empleado.getIdEmpleado(), ubicacion, carrito, codigo, 0);
+		VentaTienda venta = this.club.registrarVentaTienda(this.empleado.getIdEmpleado(), ubicacion, carrito, codigo, 0, bono);
 		this.mostrarExito("Compra registrada.");
 		this.mostrarVenta(venta);
 	}
@@ -169,8 +174,9 @@ public class PrincipalEmpleado extends ConsolaBase {
 	private void comprarCafeteria() throws Exception {
 		HashMap<String, Integer> carrito = this.leerCarrito(true);
 		double propina = this.lector.leerDecimal("Porcentaje de propina (0 a 20)", 0, 20) / 100;
+		String bono = this.leerBono(this.empleado);
 
-		VentaCafeteria venta = this.club.registrarVentaCafeteria(this.empleado.getIdEmpleado(), carrito, propina, 0);
+		VentaCafeteria venta = this.club.registrarVentaCafeteria(this.empleado.getIdEmpleado(), carrito, propina, 0, bono);
 		this.mostrarExito("Compra registrada.");
 		this.mostrarVenta(venta);
 	}

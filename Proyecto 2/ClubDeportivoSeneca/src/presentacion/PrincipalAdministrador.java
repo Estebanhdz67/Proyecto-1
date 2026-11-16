@@ -11,6 +11,7 @@ import logica.Bebida;
 import logica.EncuentroTorneo;
 import logica.Empleado;
 import logica.InscripcionTorneo;
+import logica.ParejaTorneo;
 import logica.ProductoCafeteria;
 import logica.ProductoVenta;
 import logica.Snack;
@@ -37,6 +38,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 	private static final String MENSUALIDADES = "Mensualidades";
 	private static final String REPORTES = "Reportes e historial";
 	private static final String TORNEOS = "Torneos";
+	private static final String PARTICIPANTES = "Inscripciones, pagos y premios de torneos";
 
 	// Usuarios y equipos
 	private static final String VER_USUARIOS = "Consultar usuarios";
@@ -86,6 +88,9 @@ public class PrincipalAdministrador extends ConsolaBase {
 	private static final String CONSULTAR_PREMIO = "Consultar premio del ganador (competitivo)";
 	private static final String GENERAR_BONO = "Generar bono al ganador (recreativo)";
 	private static final String HISTORIAL_TORNEO = "Consultar historial de un torneo";
+	private static final String REGISTRAR_ESTUDIANTE = "Registrar estudiante de la universidad";
+	private static final String REGISTRAR_EXTERNO = "Registrar participante externo";
+	private static final String VER_EXTERNOS = "Consultar estudiantes y externos";
 
 	private static final String[] CATEGORIAS = {"Sub13", "Sub15", "Sub17", "Mayores"};
 	private static final String[] NIVELES = {"Principiante", "Intermedio", "Avanzado"};
@@ -113,7 +118,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 	@Override
 	protected String[] getOpcionesMenu() {
-		return new String[] {USUARIOS_EQUIPOS, INVENTARIO, PERSONAL, MENSUALIDADES, REPORTES, TORNEOS};
+		return new String[] {USUARIOS_EQUIPOS, INVENTARIO, PERSONAL, MENSUALIDADES, REPORTES, TORNEOS, PARTICIPANTES};
 	}
 
 	@Override
@@ -137,8 +142,12 @@ public class PrincipalAdministrador extends ConsolaBase {
 			this.mostrarMenu("REPORTES E HISTORIAL", new String[] {REPORTE_VENTAS, REPORTE_DEPORTIVO, HISTORIAL, VER_COMPETENCIAS}, "Volver");
 			break;
 		case TORNEOS:
-			this.mostrarMenu("TORNEOS", new String[] {VER_TORNEOS, CREAR_TORNEO, INSCRIBIR_TORNEO, RETIRAR_TORNEO, LIBERAR_CUPOS,
-					INICIAR_TORNEO, PROGRAMAR_ENCUENTRO, RESULTADO_ENCUENTRO, FINALIZAR_TORNEO, REGISTRAR_PAGO, CONSULTAR_PREMIO, GENERAR_BONO, HISTORIAL_TORNEO}, "Volver");
+			this.mostrarMenu("TORNEOS", new String[] {VER_TORNEOS, CREAR_TORNEO, LIBERAR_CUPOS, INICIAR_TORNEO,
+					PROGRAMAR_ENCUENTRO, RESULTADO_ENCUENTRO, FINALIZAR_TORNEO, HISTORIAL_TORNEO}, "Volver");
+			break;
+		case PARTICIPANTES:
+			this.mostrarMenu("INSCRIPCIONES, PAGOS Y PREMIOS", new String[] {REGISTRAR_ESTUDIANTE, REGISTRAR_EXTERNO, VER_EXTERNOS,
+					INSCRIBIR_TORNEO, RETIRAR_TORNEO, REGISTRAR_PAGO, CONSULTAR_PREMIO, GENERAR_BONO}, "Volver");
 			break;
 
 		// ---------- Usuarios y equipos ----------
@@ -265,6 +274,16 @@ public class PrincipalAdministrador extends ConsolaBase {
 			break;
 		case HISTORIAL_TORNEO:
 			this.consultarHistorialTorneo();
+			break;
+		case REGISTRAR_ESTUDIANTE:
+			this.registrarParticipanteNoUsuario(true);
+			break;
+		case REGISTRAR_EXTERNO:
+			this.registrarParticipanteNoUsuario(false);
+			break;
+		case VER_EXTERNOS:
+			System.out.println("ESTUDIANTES\n" + this.club.consultarEstudiantes());
+			System.out.println("PARTICIPANTES EXTERNOS\n" + this.club.consultarExternos());
 			break;
 		default:
 			System.out.println("Opcion no disponible.");
@@ -563,7 +582,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 		double valor;
 		if(tipo.equals("Recreativo")) {
-			valor = this.lector.leerDecimal("Porcentaje del bono de descuento para el ganador (1 a 100)", 1, 100);
+			valor = this.lector.leerDecimal("Porcentaje del bono de descuento para el ganador (1 a 100)", 1, 100) / 100;
 		}else {
 			valor = this.lector.leerDecimal("Tarifa de inscripcion", 1, 100000000);
 		}
@@ -574,18 +593,73 @@ public class PrincipalAdministrador extends ConsolaBase {
 	}
 
 	/**
-	 * Pide el tipo de participante y lo busca en el club.
+	 * Pide el tipo de participante y lo busca en el club. Se usa para inscribir.
 	 */
 	private ParticipanteTorneo leerParticipante() throws Exception {
-		String tipo = this.lector.leerOpcion("Tipo de participante", new String[] {"Equipo", "Socio", "Empleado"});
+		String tipo = this.lector.leerOpcion("Tipo de participante",
+				new String[] {"Equipo", "Socio", "Empleado", "Estudiante", "Externo", "Pareja (dobles)"});
 
-		if(tipo.equals("Equipo")) {
+		if(tipo.equals("Pareja (dobles)")) {
+			System.out.println("Integrante 1:");
+			ParticipanteTorneo integrante1 = this.leerParticipanteIndividual();
+			System.out.println("Integrante 2:");
+			ParticipanteTorneo integrante2 = this.leerParticipanteIndividual();
+			return new ParejaTorneo(integrante1, integrante2);
+		}else if(tipo.equals("Equipo")) {
 			System.out.println(this.club.consultarEquipos());
 			return this.club.getEquipo(this.lector.leerTexto("Nombre del equipo"));
-		}else if(tipo.equals("Socio")) {
-			return this.club.getSocio(this.lector.leerTexto("Id del socio"));
 		}
-		return this.club.getEmpleado(this.lector.leerTexto("Id del empleado"));
+
+		return this.buscarParticipanteIndividual(tipo);
+	}
+
+	private ParticipanteTorneo leerParticipanteIndividual() throws Exception {
+		String tipo = this.lector.leerOpcion("Tipo", new String[] {"Socio", "Empleado", "Estudiante", "Externo"});
+		return this.buscarParticipanteIndividual(tipo);
+	}
+
+	private ParticipanteTorneo buscarParticipanteIndividual(String tipo) throws Exception {
+		if(tipo.equals("Socio")) {
+			return this.club.getSocio(this.lector.leerTexto("Id del socio"));
+		}else if(tipo.equals("Empleado")) {
+			return this.club.getEmpleado(this.lector.leerTexto("Id del empleado"));
+		}else if(tipo.equals("Estudiante")) {
+			return this.club.getEstudiante(this.lector.leerTexto("Id del estudiante"));
+		}
+		return this.club.getExterno(this.lector.leerTexto("Identificacion del participante externo"));
+	}
+
+	/**
+	 * Muestra los inscritos de un torneo y retorna el escogido. Se usa para retirar,
+	 * registrar pagos, consultar el premio y generar el bono.
+	 */
+	private ParticipanteTorneo leerInscrito(String idTorneo, String mensaje) throws Exception {
+		ArrayList<InscripcionTorneo> inscripciones = this.club.getTorneo(idTorneo).getInscripciones();
+
+		if(inscripciones.isEmpty()) {
+			throw new Exception("El torneo no tiene participantes inscritos");
+		}
+
+		ArrayList<String> nombres = new ArrayList<String>();
+		for(InscripcionTorneo inscripcion : inscripciones) {
+			nombres.add(inscripcion.getParticipante().getNombreParticipante() + " (" + inscripcion.getParticipante().getTipoParticipante() + ")");
+		}
+
+		return inscripciones.get(this.lector.leerPosicion(mensaje, nombres)).getParticipante();
+	}
+
+	private void registrarParticipanteNoUsuario(boolean estudiante) throws Exception {
+		String id = this.lector.leerTexto(estudiante ? "Id del estudiante" : "Identificacion");
+		String nombre = this.lector.leerTexto("Nombre completo");
+		double ranking = this.lector.leerDecimal("Ranking para torneos (0 o mas)", 0, 100000);
+
+		if(estudiante) {
+			this.club.registrarEstudiante(id, nombre, ranking);
+		}else {
+			this.club.registrarExterno(id, nombre, ranking);
+		}
+
+		this.mostrarExito(nombre + " registrado. Ya se puede inscribir en torneos.");
 	}
 
 	private void inscribirEnTorneo() throws Exception {
@@ -599,7 +673,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 	private void retirarDeTorneo() throws Exception {
 		String idTorneo = this.leerIdTorneo();
-		ParticipanteTorneo participante = this.leerParticipante();
+		ParticipanteTorneo participante = this.leerInscrito(idTorneo, "Participante a retirar");
 
 		this.club.desinscribirParticipanteTorneo(idTorneo, participante);
 		this.mostrarExito(participante.getNombreParticipante() + " retirado del torneo " + idTorneo + ". El cupo quedo libre.");
@@ -660,7 +734,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 	private void registrarPagoTorneo() throws Exception {
 		String idTorneo = this.leerIdTorneo();
-		ParticipanteTorneo participante = this.leerParticipante();
+		ParticipanteTorneo participante = this.leerInscrito(idTorneo, "Participante que paga");
 		double valor = this.lector.leerDecimal("Valor pagado", 1, 100000000);
 
 		this.club.registrarPagoTorneo(idTorneo, participante, valor);
@@ -669,8 +743,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 	private void consultarPremio() throws Exception {
 		String idTorneo = this.leerIdTorneo();
-		System.out.println("Ganador:");
-		ParticipanteTorneo ganador = this.leerParticipante();
+		ParticipanteTorneo ganador = this.leerInscrito(idTorneo, "Ganador");
 		double premio = this.club.consultarPremioTorneo(idTorneo, ganador);
 
 		if(premio == 0) {
@@ -682,11 +755,10 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 	private void generarBono() throws Exception {
 		String idTorneo = this.leerIdTorneo();
-		System.out.println("Ganador:");
-		ParticipanteTorneo ganador = this.leerParticipante();
+		ParticipanteTorneo ganador = this.leerInscrito(idTorneo, "Ganador");
 		BonoDescuento bono = this.club.generarBonoTorneo(idTorneo, ganador);
 
-		this.mostrarExito("Bono " + bono.getCodigo() + " del " + bono.getPorcentaje() + "% generado para "
+		this.mostrarExito("Bono " + bono.getCodigo() + " del " + Math.round(bono.getPorcentaje() * 100) + "% generado para "
 				+ ganador.getNombreParticipante() + ".");
 	}
 

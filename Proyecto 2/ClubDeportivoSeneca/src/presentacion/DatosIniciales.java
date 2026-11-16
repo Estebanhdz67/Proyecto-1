@@ -125,7 +125,7 @@ public class DatosIniciales {
 
 	private static void cargarTorneos(ClubDeportivoSeneca club) throws Exception {
 		club.crearTorneo("T1", "Copa Recreativa de Tenis", "Intermedio", 8, Date.valueOf("2026-12-05"),
-				"Recreativo", "Eliminacion directa", null, club.getDisciplina("Tenis"), 20);
+				"Recreativo", "Eliminacion directa", null, club.getDisciplina("Tenis"), 0.20);
 		club.crearTorneo("T2", "Champions League Seneca", "Sub17", 8, Date.valueOf("2026-12-12"),
 				"Competitivo", "Liga", new Futbol(), null, 100000);
 	}
