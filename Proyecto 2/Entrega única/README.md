@@ -2,7 +2,7 @@
 
 **ISIS-1226 Diseño y Programación Orientado a Objetos · Universidad de los Andes · 2026-20**
 
-Integrantes: Esteban David Hernández Arias, Gabriel Ortegón, [Nombre del tercer integrante]
+Integrantes: Esteban David Hernández Arias, Gabriel Esteban Ortegón Crespo, César Andrey Sanmiguel Mahecha
 
 En esta carpeta está todo lo de la entrega única del Proyecto 2: el proyecto Eclipse con el código y las pruebas, las historias de usuario, el documento de diseño y los diagramas (archivos fuente `.drawio` e imágenes `.png`).
 
