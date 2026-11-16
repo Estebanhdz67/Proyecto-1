@@ -1,6 +1,7 @@
 package presentacion;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.sql.Time;
 
 import java.util.ArrayList;
@@ -220,7 +221,7 @@ public class PrincipalAdministrador extends ConsolaBase {
 
 		// ---------- Reportes ----------
 		case REPORTE_VENTAS:
-			System.out.println(this.club.generarReporteVentas());
+			this.reporteVentas();
 			break;
 		case REPORTE_DEPORTIVO:
 			System.out.println(this.club.generarReporteDeportivo());
@@ -288,6 +289,37 @@ public class PrincipalAdministrador extends ConsolaBase {
 		default:
 			System.out.println("Opcion no disponible.");
 		}
+	}
+
+	// ------------------------------------------------------------------
+	// Reportes
+	// ------------------------------------------------------------------
+
+	/**
+	 * Calcula el inicio y el fin del periodo a partir de una fecha de referencia.
+	 * Semanal va de lunes a domingo y mensual del primer al ultimo dia del mes.
+	 */
+	private void reporteVentas() throws Exception {
+		String periodo = this.lector.leerOpcion("Periodo", new String[] {"Diario", "Semanal", "Mensual", "Todo el historial"});
+
+		if(periodo.equals("Todo el historial")) {
+			System.out.println(this.club.generarReporteVentas());
+			return;
+		}
+
+		LocalDate referencia = this.lector.leerFecha("Fecha de referencia").toLocalDate();
+		LocalDate inicio = referencia;
+		LocalDate fin = referencia;
+
+		if(periodo.equals("Semanal")) {
+			inicio = referencia.minusDays(referencia.getDayOfWeek().getValue() - 1);
+			fin = inicio.plusDays(6);
+		}else if(periodo.equals("Mensual")) {
+			inicio = referencia.withDayOfMonth(1);
+			fin = referencia.withDayOfMonth(referencia.lengthOfMonth());
+		}
+
+		System.out.println(this.club.generarReporteVentas(Date.valueOf(inicio), Date.valueOf(fin)));
 	}
 
 	// ------------------------------------------------------------------

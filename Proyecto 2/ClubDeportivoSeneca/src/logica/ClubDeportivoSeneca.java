@@ -249,9 +249,42 @@ public class ClubDeportivoSeneca {
 		if(!(empleado instanceof Entrenador)) {
 			throw new Exception("No es entrenador");
 		}
-		SesionEntrenamiento sesionEntrenamiento = new SesionEntrenamiento(fecha, hora, duracion, (Entrenador) empleado, getInstalacion(idInstalacion), equipo, disciplina);
+		if(duracion <= 0) {
+			throw new Exception("Duracion invalida");
+		}
+
+		Instalacion instalacion = getInstalacion(idInstalacion);
+		Time horaFin = this.calcularHoraFin(hora, duracion);
+
+		if(!hora.before(horaFin)) {
+			throw new Exception("La sesion debe terminar el mismo dia");
+		}
+
+		for(Reserva reserva : this.reservas) {
+			if(reserva.getInstalacion().getIdInstalacion().equals(idInstalacion) && reserva.getFecha().equals(fecha)
+					&& this.horariosSeCruzan(hora, horaFin, reserva.getHoraInicio(), reserva.getHoraFin())) {
+				throw new Exception("La instalacion esta ocupada por una reserva");
+			}
+		}
+
+		for(SesionEntrenamiento sesionExistente : this.sesiones) {
+			if(sesionExistente.getInstalacion().getIdInstalacion().equals(idInstalacion) && sesionExistente.getFecha().equals(fecha)
+					&& this.horariosSeCruzan(hora, horaFin, sesionExistente.getHora(), this.calcularHoraFin(sesionExistente.getHora(), sesionExistente.getDuracion()))) {
+				throw new Exception("La instalacion esta ocupada por otra sesion");
+			}
+		}
+
+		SesionEntrenamiento sesionEntrenamiento = new SesionEntrenamiento(fecha, hora, duracion, (Entrenador) empleado, instalacion, equipo, disciplina);
 		this.sesiones.add(sesionEntrenamiento);
 		return sesionEntrenamiento;
+	}
+
+	private Time calcularHoraFin(Time hora, int duracion) {
+		return Time.valueOf(hora.toLocalTime().plusMinutes(duracion));
+	}
+
+	private boolean horariosSeCruzan(Time inicio1, Time fin1, Time inicio2, Time fin2) {
+		return inicio1.before(fin2) && inicio2.before(fin1);
 	}
 
 	public void convocarEquipo(SesionEntrenamiento sesion, Equipo equipo) {
@@ -268,6 +301,11 @@ public class ClubDeportivoSeneca {
 
 	public void registrarEvaluacion(SesionEntrenamiento sesion, String idSocio, double nota, String comentario) throws Exception {
 		AsistenciaEntrenamiento asistenciaEntrenamiento = sesion.buscarAsistencia(idSocio);
+
+		if(!asistenciaEntrenamiento.getEstado().equals("Asistio") && !asistenciaEntrenamiento.getEstado().equals("Tarde")) {
+			throw new Exception("Solo se puede evaluar a un jugador que asistio o llego tarde");
+		}
+
 		asistenciaEntrenamiento.setEvaluacion(new EvaluacionDesempeno(nota, comentario));
 	}
 
@@ -1123,11 +1161,87 @@ public class ClubDeportivoSeneca {
 	}
 
 	public String consultarHistorial() {
+		if(this.reservas.isEmpty() && this.partidosPractica.isEmpty() && this.partidosInternos.isEmpty()
+				&& this.partidosCompetencia.isEmpty() && this.sesiones.isEmpty()) {
+			return "No hay registros\n";
+		}
+
 		String texto = "Reservas\t" + this.reservas.size() + "\n";
+
+		if(this.reservas.isEmpty()) {
+			texto += "No hay registros\n";
+		}
+
+		for(Reserva reserva : this.reservas) {
+			texto += reserva.getFecha() + "\t";
+			texto += reserva.getHoraInicio() + "-" + reserva.getHoraFin() + "\t";
+			texto += reserva.getInstalacion().getIdInstalacion() + "\t";
+			texto += reserva.getSocio().getNombre() + "\t";
+			texto += reserva.getDisciplina().getNombre() + "\t";
+			texto += reserva.getModalidad() + "\n";
+		}
+
 		texto += "Partidos de practica\t" + this.partidosPractica.size() + "\n";
+
+		if(this.partidosPractica.isEmpty()) {
+			texto += "No hay registros\n";
+		}
+
+		for(PartidoPractica partidoPractica : this.partidosPractica) {
+			texto += partidoPractica.getFecha() + "\t";
+			texto += partidoPractica.getDisciplina().getNombre() + "\t";
+			texto += partidoPractica.getModalidad() + "\t";
+			texto += this.nombresJugadores(partidoPractica.getJugadores()) + "\t";
+			texto += this.textoResultado(partidoPractica.getResultado()) + "\n";
+		}
+
 		texto += "Partidos internos\t" + this.partidosInternos.size() + "\n";
+
+		if(this.partidosInternos.isEmpty()) {
+			texto += "No hay registros\n";
+		}
+
+		for(PartidoInterno partidoInterno : this.partidosInternos) {
+			texto += partidoInterno.getFecha() + "\t";
+			texto += partidoInterno.getLocal().getNombre() + " vs " + partidoInterno.getVisitante().getNombre() + "\t";
+			texto += this.textoResultado(partidoInterno.getMarcador()) + "\n";
+		}
+
 		texto += "Partidos de competencia\t" + this.partidosCompetencia.size() + "\n";
+
+		if(this.partidosCompetencia.isEmpty()) {
+			texto += "No hay registros\n";
+		}
+
+		for(PartidoCompetencia partidoCompetencia : this.partidosCompetencia) {
+			texto += partidoCompetencia.getFecha() + "\t";
+			texto += partidoCompetencia.getCompetencia().getNombre() + "\t";
+			texto += partidoCompetencia.getEquipo().getNombre() + " vs " + partidoCompetencia.getInstitucionRival() + "\t";
+			texto += partidoCompetencia.getEscenario() + "\t";
+			texto += this.textoResultado(partidoCompetencia.getMarcador()) + "\n";
+		}
+
 		texto += "Sesiones de entrenamiento\t" + this.sesiones.size() + "\n";
+
+		if(this.sesiones.isEmpty()) {
+			texto += "No hay registros\n";
+		}
+
+		for(SesionEntrenamiento sesionEntrenamiento : this.sesiones) {
+			texto += sesionEntrenamiento.getFecha() + "\t";
+			texto += sesionEntrenamiento.getHora() + "\t";
+			texto += sesionEntrenamiento.getDuracion() + " min\t";
+			texto += sesionEntrenamiento.getEntrenador().getNombre() + "\t";
+			texto += sesionEntrenamiento.getInstalacion().getIdInstalacion() + "\t";
+
+			if(sesionEntrenamiento.getEquipo() != null) {
+				texto += sesionEntrenamiento.getEquipo().getNombre() + "\n";
+			}else if(sesionEntrenamiento.getDisciplina() != null) {
+				texto += sesionEntrenamiento.getDisciplina().getNombre() + "\n";
+			}else {
+				texto += "Sin grupo\n";
+			}
+		}
 
 		return texto;
 	}
@@ -1158,11 +1272,183 @@ public class ClubDeportivoSeneca {
 		return texto;
 	}
 
+	public String generarReporteVentas(Date inicio, Date fin) throws Exception {
+		if(inicio == null || fin == null || inicio.toLocalDate().isAfter(fin.toLocalDate())) {
+			throw new Exception("Periodo invalido");
+		}
+
+		double totalTienda = 0;
+		double totalCafeteria = 0;
+		double totalMensualidades = 0;
+		int cantidadVentas = 0;
+
+		for(Venta venta : this.ventas) {
+			if(this.estaEnPeriodo(venta.getFecha(), inicio, fin)) {
+				cantidadVentas++;
+
+				if(venta instanceof VentaTienda) {
+					totalTienda += venta.getTotal();
+				}else if(venta instanceof VentaCafeteria) {
+					totalCafeteria += venta.getTotal();
+				}
+			}
+		}
+
+		for(Socio socio : this.socios.values()) {
+			for(Mensualidad mensualidad : socio.getMensualidades()) {
+				if(this.estaEnPeriodo(mensualidad.getFechaPago(), inicio, fin)) {
+					totalMensualidades += mensualidad.getValor();
+				}
+			}
+		}
+
+		String texto = "Periodo\t" + inicio + " a " + fin + "\n";
+		texto += "Ventas\t" + cantidadVentas + "\n";
+		texto += "Tienda\t" + totalTienda + "\n";
+		texto += "Cafeteria\t" + totalCafeteria + "\n";
+		texto += "Mensualidades\t" + totalMensualidades + "\n";
+		texto += "Total\t" + (totalTienda + totalCafeteria + totalMensualidades) + "\n";
+
+		return texto;
+	}
+
+	private boolean estaEnPeriodo(Date fecha, Date inicio, Date fin) {
+		return !fecha.toLocalDate().isBefore(inicio.toLocalDate()) && !fecha.toLocalDate().isAfter(fin.toLocalDate());
+	}
+
 	public String generarReporteDeportivo() {
 		String texto = "Sesiones\t" + this.sesiones.size() + "\n";
 		texto += "Partidos internos\t" + this.partidosInternos.size() + "\n";
 		texto += "Partidos de competencia\t" + this.partidosCompetencia.size() + "\n";
 		texto += "Partidos de practica\t" + this.partidosPractica.size() + "\n";
+
+		texto += this.generarReporteAsistencia();
+		texto += this.generarReporteResultados();
+		texto += this.generarReporteRankings();
+
+		return texto;
+	}
+
+	private String generarReporteAsistencia() {
+		int asistio = 0;
+		int tarde = 0;
+		int falto = 0;
+		int pendiente = 0;
+
+		for(SesionEntrenamiento sesionEntrenamiento : this.sesiones) {
+			for(AsistenciaEntrenamiento asistenciaEntrenamiento : sesionEntrenamiento.getAsistencias()) {
+				if(asistenciaEntrenamiento.getEstado().equals("Asistio")) {
+					asistio++;
+				}else if(asistenciaEntrenamiento.getEstado().equals("Tarde")) {
+					tarde++;
+				}else if(asistenciaEntrenamiento.getEstado().equals("Falto")) {
+					falto++;
+				}else {
+					pendiente++;
+				}
+			}
+		}
+
+		String texto = "----\nAsistencia\n";
+
+		if(asistio + tarde + falto + pendiente == 0) {
+			return texto + "No hay registros\n";
+		}
+
+		texto += "Asistio\t" + asistio + "\n";
+		texto += "Tarde\t" + tarde + "\n";
+		texto += "Falto\t" + falto + "\n";
+		texto += "Pendiente\t" + pendiente + "\n";
+
+		if(asistio + tarde + falto > 0) {
+			texto += "Porcentaje de asistencia\t" + Math.round((asistio + tarde) * 100.0 / (asistio + tarde + falto)) + "%\n";
+		}
+
+		return texto;
+	}
+
+	private String generarReporteResultados() {
+		String texto = "----\nResultados\n";
+
+		if(this.partidosInternos.isEmpty() && this.partidosCompetencia.isEmpty() && this.partidosPractica.isEmpty()) {
+			return texto + "No hay registros\n";
+		}
+
+		for(PartidoInterno partidoInterno : this.partidosInternos) {
+			texto += "Interno\t" + partidoInterno.getLocal().getNombre() + " vs " + partidoInterno.getVisitante().getNombre() + "\t";
+			texto += this.textoResultado(partidoInterno.getMarcador()) + "\n";
+		}
+
+		for(PartidoCompetencia partidoCompetencia : this.partidosCompetencia) {
+			texto += "Competencia\t" + partidoCompetencia.getEquipo().getNombre() + " vs " + partidoCompetencia.getInstitucionRival() + "\t";
+			texto += this.textoResultado(partidoCompetencia.getMarcador()) + "\n";
+		}
+
+		for(PartidoPractica partidoPractica : this.partidosPractica) {
+			texto += "Practica\t" + this.nombresJugadores(partidoPractica.getJugadores()) + "\t";
+			texto += this.textoResultado(partidoPractica.getResultado()) + "\n";
+		}
+
+		return texto;
+	}
+
+	private String generarReporteRankings() {
+		String texto = "----\nRankings\n";
+		ArrayList<Ranking> rankings = new ArrayList<Ranking>();
+
+		for(Socio socio : this.socios.values()) {
+			rankings.addAll(socio.getRankings());
+		}
+
+		if(rankings.isEmpty()) {
+			return texto + "No hay registros\n";
+		}
+
+		for(int i = 0; i < rankings.size(); i++) {
+			for(int j = i + 1; j < rankings.size(); j++) {
+				if(this.rankingVaAntes(rankings.get(j), rankings.get(i))) {
+					Ranking temporal = rankings.get(i);
+					rankings.set(i, rankings.get(j));
+					rankings.set(j, temporal);
+				}
+			}
+		}
+
+		for(Ranking ranking : rankings) {
+			texto += ranking.getDisciplina().getNombre() + "\t";
+			texto += ranking.getSocio().getNombre() + "\t";
+			texto += ranking.getPuntajeELO() + "\n";
+		}
+
+		return texto;
+	}
+
+	private boolean rankingVaAntes(Ranking ranking1, Ranking ranking2) {
+		int comparacion = ranking1.getDisciplina().getNombre().compareTo(ranking2.getDisciplina().getNombre());
+
+		if(comparacion != 0) {
+			return comparacion < 0;
+		}
+
+		return ranking1.getPuntajeELO() > ranking2.getPuntajeELO();
+	}
+
+	private String textoResultado(String resultado) {
+		if(resultado == null || resultado.equals("")) {
+			return "Sin resultado";
+		}
+		return resultado;
+	}
+
+	private String nombresJugadores(ArrayList<Socio> jugadores) {
+		String texto = "";
+
+		for(int i = 0; i < jugadores.size(); i++) {
+			if(i > 0) {
+				texto += ", ";
+			}
+			texto += jugadores.get(i).getNombre();
+		}
 
 		return texto;
 	}
